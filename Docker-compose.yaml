@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: 'mongo'
+    volumes:
+      - data:/data/db
+    # environment is commented since I'm using an env_file
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME:max 
+    #   MONGO_INITDB_ROOT_PASSWORD:secret 
+    env_file:
+      - ./env/mongo.env
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - '80:80'
+    volumes:
+      - logs:/app/logs
+      - ./backend:/app
+      - /app/node_modules
+    env_file:
+      - ./env/backend.env
+    depends_on:
+      - mongodb
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend/src:/app/src
+      #replaces the interactive mode (-it in docker run)
+    stdin_open: true
+    tty: true
+    depends_on: 
+      - backend
+    ports: 
+      - '3000:3000' 
+volumes: 
+  data:
+  logs:
+
+# We don't need to define a network since docker-compose
+# automatically assings all the containers in the same
+# network using the name of the project.
